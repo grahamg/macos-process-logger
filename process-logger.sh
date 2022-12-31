@@ -1,7 +1,13 @@
 #!/bin/bash
 
-# Set the log file
-LOG_FILE="/tmp/process-logger.log"
+# Set the sqlite3 database file
+DB_FILE="/tmp/process-logger.db"
+
+# Create the table if it doesn't exist
+if [ ! -f "$DB_FILE" ]
+then
+    sqlite3 "$DB_FILE" "CREATE TABLE process_list (time_stamp DATETIME, process_list TEXT);"
+fi
 
 # Get the current list of processes managed by launchd
 CURRENT_PROCESSES=$(launchctl list)
@@ -18,8 +24,7 @@ do
     # If there are differences, log the new processes
     if [ -n "$DIFF" ]
     then
-        echo "New processes detected:" >> "$LOG_FILE"
-        echo "$DIFF" >> "$LOG_FILE"
+        sqlite3 "$DB_FILE" "INSERT INTO process_list (time_stamp, process_list) VALUES (datetime('now'), '$DIFF');"
     fi
 
     # Update the current list of processes
@@ -28,4 +33,3 @@ do
     # Sleep for a short period before checking again
     sleep 5
 done
-
