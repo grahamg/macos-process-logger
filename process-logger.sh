@@ -3,6 +3,9 @@
 # Set the sqlite3 database file
 DB_FILE="/tmp/process-logger.db"
 
+# Set the sleep time argument
+SLEEP_TIME=$1
+
 # Create the table if it doesn't exist
 if [ ! -f "$DB_FILE" ]
 then
@@ -16,7 +19,7 @@ CURRENT_PROCESSES=$(launchctl list)
 while :
 do
     # Get the updated list of processes managed by launchd
-    NEW_PROCESSES=$(launchctl list)
+    NEW_PROCESSES=$(launchctl list | grep -E '(< -)|(\b(?<!\.)\d+(?!\.)\b)|(---)|(([0-9a-fA-F]){7})|(New processes detected:\n.*[0-9a-fA-F]+)|(< [0-9]+)|(> [0-9]+ 0)|(.*com.apple.mdworker.shared.*\n)')
 
     # Compare the current and new lists of processes
     DIFF=$(diff <(echo "$CURRENT_PROCESSES") <(echo "$NEW_PROCESSES"))
@@ -31,5 +34,5 @@ do
     CURRENT_PROCESSES="$NEW_PROCESSES"
 
     # Sleep for a short period before checking again
-    sleep 5
+    sleep $SLEEP_TIME
 done
